@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>萬用數據採集表單 | Vanilla Collector</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .form-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 450px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: var(--text-muted);
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--accent);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    #statusMessage {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-card">
+    <h2>聯絡 / 需求提交</h2>
+    <p>請填寫下方資訊，系統將自動處理並即時通知我們。</p>
+
+    <form id="webhookForm">
+      <div class="form-group">
+        <label for="name">姓名 / 稱呼</label>
+        <input type="text" id="name" name="name" required placeholder="例如：王小明">
+      </div>
+
+      <div class="form-group">
+        <label for="email">電子郵件</label>
+        <input type="email" id="email" name="email" required placeholder="name@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="message">需求說明</label>
+        <textarea id="message" name="message" rows="4" required placeholder="請輸入您的訊息..."></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn">送出資料</button>
+    </form>
+
+    <div id="statusMessage"></div>
+  </div>
+
+  <script>
+    // ⚠️ 這裡填入你的 n8n Webhook 網址
+    const N8N_WEBHOOK_URL = "YOUR_N8N_WEBHOOK_URL_HERE";
+
+    const form = document.getElementById('webhookForm');
+    const statusMessage = document.getElementById('statusMessage');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      submitBtn.disabled = true;
+      submitBtn.innerText = "傳送中...";
+      statusMessage.innerText = "";
+      statusMessage.style.color = "";
+
+      const formData = {
+        name: form.name.value,
+        email: form.email.value,
+        message: form.message.value,
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        const response = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+          statusMessage.style.color = "#34d399";
+          statusMessage.innerText = "✓ 資料已順利送出！";
+          form.reset();
+        } else {
+          throw new Error("伺服器回應異常");
+        }
+      } catch (error) {
+        statusMessage.style.color = "#f87171";
+        statusMessage.innerText = "✕ 送出失敗，請稍後再試。";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "送出資料";
+      }
+    });
+  </script>
+</body>
+</html>
